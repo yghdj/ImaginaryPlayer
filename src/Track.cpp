@@ -29,6 +29,12 @@ namespace MusicPlayer {
       }
    }
 
+   std::string Track::serialize() const {
+      std::stringstream strm;
+      strm << this->title_ << ';' << duration_ / 60 << ':' << duration_ % 60 << ';' << Codec::getCodecAsString(codec_);
+      return strm.str();
+   }
+
    bool Track::deserialize(const std::string& source)
    {
       // expected: "<Title>;<Duration>;<Codec>"

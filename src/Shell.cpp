@@ -1,14 +1,12 @@
 ﻿#include "Shell.h"
 
+#include "Help.h"
 #include "Utils.h"
 #include "Version.h"
 
 #include <fstream>
 #include <sstream>
-
-#ifdef _DEBUG
 #include <filesystem>
-#endif
 
 using std::endl;
 using std::string;
@@ -21,7 +19,8 @@ namespace MusicPlayer
 #pragma region Constructors
 
    Shell::Shell() :
-      input_(nullptr), output_(nullptr), is_playing_(false)
+      input_(nullptr), output_(nullptr), is_playing_(false),
+      random_mode_(false), repeat_mode_(false)
    {
       // construct instruction array
       available_instructions_ = {
@@ -37,12 +36,10 @@ namespace MusicPlayer
          { "random", &Shell::random_ },
          { "repeat", &Shell::repeat_ },
          { "remove_dupes", &Shell::removeDuplicates_ },
+         { "current_directory", &Shell::cd_ },
+         { "load", &Shell::loadPlaylist_ },
+         { "save", &Shell::savePlaylist_ },
       };
-
-#ifdef _DEBUG
-      available_instructions_.insert({ "cd", &Shell::cd_ });
-      available_instructions_.insert({ "load", &Shell::loadPlaylist_ });
-#endif
 
       std::random_device rd;
       rng_.seed(rd());
@@ -75,11 +72,12 @@ namespace MusicPlayer
          {
             *output_ << instruction.first << endl;
          }
+
          *output_ << "Type \"help <instruction>\" to get more info about a specific command." << endl;
       }
       else
       {
-         *output_ << "Documentation for this instruction is not yet available." << endl;
+         *output_ << HelpMessages::forInstruction(args[0]) << endl;
       }
    }
 
@@ -431,7 +429,6 @@ namespace MusicPlayer
       *output_ << "Repeat mode on." << endl;
    }
 
-#ifdef _DEBUG
    void Shell::cd_(const ArgumentArray& args)
    {
       if (args.empty())
@@ -469,16 +466,45 @@ namespace MusicPlayer
          return;
       }
 
-      ArgumentArray track_file_list;
-      string track_file_name;
-      while (std::getline(file, track_file_name))
+     string track_record;
+     while (std::getline(file, track_record))
+     {
+         ArgumentArray splitted = split(track_record, "||");
+         string track_file = splitted[0];
+         string track_infos = splitted[1];
+
+         Track new_track;
+         new_track.deserialize(track_infos);
+
+         playlist_.push_back({track_file, new_track});
+     }
+
+     file.close();
+   }
+
+   void Shell::savePlaylist_(const ArgumentArray& args)
+   {
+      if (args.size() != 1)
       {
-         track_file_list.push_back(track_file_name);
+         *output_ << "This command only accept one argument." << endl;
+         return;
+      }
+      
+      std::ofstream file(args[0], std::ofstream::out | std::ofstream::trunc);
+
+      if (!file.is_open())
+      {
+         *output_ << "File \"" << args[0] << "\" could not be opened." << endl;
+         return;
       }
 
-      addTrack_(track_file_list);
+      for(auto& entry: playlist_) {
+         const Track& track_to_save = entry.second;
+         file << entry.first << "||" << track_to_save.serialize() << endl;
+      }
+
+      file.close();
    }
-#endif
 
 #pragma endregion
 

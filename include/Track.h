@@ -19,6 +19,7 @@ namespace MusicPlayer
 
       Track(std::string title, time_t duration, std::string _codec);
 
+      std::string serialize() const;
       bool deserialize(const std::string& input);
 
       bool operator=(const Track& other) const;

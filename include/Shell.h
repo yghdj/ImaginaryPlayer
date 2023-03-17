@@ -39,6 +39,7 @@ namespace MusicPlayer
 
    private:
       std::unordered_map<std::string, Instruction> available_instructions_;
+      const std::string sHelpFlag = "--help";
 
       Playlist playlist_;
       Playlist::iterator currently_playing_;
@@ -75,10 +76,9 @@ namespace MusicPlayer
       void random_(const ArgumentArray&);
       void repeat_(const ArgumentArray&);
 
-#ifdef _DEBUG
       void cd_(const ArgumentArray&);
       void loadPlaylist_(const ArgumentArray&);
-#endif
+      void savePlaylist_(const ArgumentArray&);
    };
 
 }
