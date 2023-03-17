@@ -479,6 +479,9 @@ namespace MusicPlayer
          playlist_.push_back({track_file, new_track});
      }
 
+     if(currently_playing_ == playlist_.end())
+         currently_playing_ = playlist_.begin();
+
      file.close();
    }
 
